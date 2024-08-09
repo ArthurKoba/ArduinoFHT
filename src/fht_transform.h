@@ -29,7 +29,7 @@ static inline void fht_transform() {
     // initialize
     asm volatile (
         "clr r15 \n" // clear the null register
-        "ldi r16, " STRINGIFY(FHT_N/8) " \n" // prep loop counter
+        "ldi r16, " STRINGIFY(FHT_SAMPLES_N/8) " \n" // prep loop counter
         "mov r14,r16 \n"
         "ldi r28, lo8(fht_input) \n" //set to beginning of data space
         "ldi r29, hi8(fht_input) \n"
@@ -230,7 +230,7 @@ static inline void fht_transform() {
         "ldi r16, 0x20 \n" // prep outer loop counter - full stride (x2 for 16b numbers)
         "mov r12,r16 \n"
         "clr r13 \n"
-        "ldi r16, hi8((fht_input + " STRINGIFY(FHT_N*2) ")) \n" // prep end of dataspace register
+        "ldi r16, hi8((fht_input + " STRINGIFY(FHT_SAMPLES_N*2) ")) \n" // prep end of dataspace register
         "mov r9, r16 \n"
         "ldi r30, lo8(_cas_constants) \n" // initialize lookup table address
         "ldi r31, hi8(_cas_constants) \n"
@@ -425,7 +425,7 @@ static inline void fht_transform() {
         "ror r24 \n"
         "add r28,r24 \n" // lower is incremented by quarter stride to get to the next butterfly
         "adc r29,r25 \n"
-        "cpi r28, lo8(fht_input + " STRINGIFY(FHT_N*2) ") \n" // check if at end of dataspace
+        "cpi r28, lo8(fht_input + " STRINGIFY(FHT_SAMPLES_N*2) ") \n" // check if at end of dataspace
         "cpc r29, r9 \n"
         "brsh 10f \n"
         "movw r26,r28 \n" // bottom is now top

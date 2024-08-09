@@ -40,8 +40,8 @@ static inline void fht_mag_octave() {
         "ldi r27, hi8(fht_input) \n"
         "ldi r28, lo8(fht_oct_out) \n" // set to beginning of result space
         "ldi r29, hi8(fht_oct_out) \n"
-        "ldi r30, lo8(fht_input + " STRINGIFY(FHT_N*2) ") \n" // set to end of data space
-        "ldi r31, hi8(fht_input + " STRINGIFY(FHT_N*2) ") \n"
+        "ldi r30, lo8(fht_input + " STRINGIFY(FHT_SAMPLES_N * 2) ") \n" // set to end of data space
+        "ldi r31, hi8(fht_input + " STRINGIFY(FHT_SAMPLES_N * 2) ") \n"
         "movw r10,r30 \n" // z register clobbered below
         "clr r15 \n" // clear null register
         "ldi r20, 0x01 \n" // set first bin check (needed to make sequence 1-1-2-4-etc)
@@ -113,7 +113,7 @@ static inline void fht_mag_octave() {
         "dec r22 \n"
         "brne 1b \n"
 
-#if (OCT_NORM == 1) // put normilisation code in if needed
+        #if (OCT_NORM == 1) // put normilisation code in if needed
         "mov r22,r21 \n"
         "lsr r22 \n" // check if done
         "brcs 12f \n"
@@ -126,7 +126,7 @@ static inline void fht_mag_octave() {
         "ror r2 \n"
         "lsr r22 \n" // check if done
         "brcc 11b \n"
-#endif
+        #endif
 
         // decibel of the square root via lookup table
         // scales the magnitude to an 8b value times an 8b exponent

@@ -7,7 +7,7 @@
 #define SCALE 1
 #endif
 
-uint8_t __attribute__((used)) fht_lin_out8[(FHT_N/2)]; // FHT linear output magintude buffer
+uint8_t __attribute__((used)) fht_lin_out8[FHT_AMPLITUDES_N]; // FHT linear output magintude buffer
 
 extern const uint8_t __attribute__((used)) _lin_table8[] PROGMEM = {
     #include <sqrtlookup8.inc>
@@ -37,11 +37,11 @@ static inline void fht_mag_lin8() {
         "ldi r27, hi8(fht_input) \n"
         "ldi r28, lo8(fht_lin_out8) \n" // set to beginning of result space
         "ldi r29, hi8(fht_lin_out8) \n"
-        "ldi r30, lo8(fht_input + " STRINGIFY(FHT_N*2) ") \n" // set to end of data space
-        "ldi r31, hi8(fht_input + " STRINGIFY(FHT_N*2) ") \n"
+        "ldi r30, lo8(fht_input + " STRINGIFY(FHT_SAMPLES_N * 2) ") \n" // set to end of data space
+        "ldi r31, hi8(fht_input + " STRINGIFY(FHT_SAMPLES_N * 2) ") \n"
         "movw r8,r30 \n" // z register clobbered below
         "clr r15 \n" // clear null register
-        "ldi r20, " STRINGIFY(FHT_N/2) " \n" // set loop counter
+        "ldi r20, " STRINGIFY(FHT_SAMPLES_N / 2) " \n" // set loop counter
         "ld r16,x+ \n" // do zero frequency bin first
         "ld r17,x+ \n"
         "movw r18,r16 \n" // double zero frequency bin
@@ -81,9 +81,9 @@ static inline void fht_mag_lin8() {
         "adc r4,r1 \n"
         "adc r5,r15 \n"
 
-#if (SCALE == 1)
+        #if (SCALE == 1)
         "movw r30,r4 \n"
-#elif (SCALE == 2)
+        #elif (SCALE == 2)
         "lsl r3 \n"
         "rol r4 \n"
         "rol r5 \n"

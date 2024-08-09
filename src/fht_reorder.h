@@ -4,15 +4,15 @@
 #include <FHT.h>
 
 extern const uint8_t __attribute__((used)) _reorder_table[] PROGMEM = {
-#if (FHT_N == 256)
+#if (FHT_SAMPLES_N == 256)
     #include <256_reorder.inc>
-#elif (FHT_N == 128)
+#elif (FHT_SAMPLES_N == 128)
     #include <128_reorder.inc>
-#elif (FHT_N == 64)
+#elif (FHT_SAMPLES_N == 64)
     #include <64_reorder.inc>
-#elif (FHT_N == 32)
+#elif (FHT_SAMPLES_N == 32)
     #include <32_reorder.inc>
-#elif (FHT_N == 16)
+#elif (FHT_SAMPLES_N == 16)
     #include <16_reorder.inc>
 #endif
 };
@@ -33,14 +33,14 @@ static inline void fht_reorder() {
     asm volatile (
         "ldi r30, lo8(_reorder_table) \n" // initialize lookup table address
         "ldi r31, hi8(_reorder_table) \n"
-        "ldi r20, " STRINGIFY((FHT_N/2) - _R_V) " \n" // set to first sample
+        "ldi r20, " STRINGIFY((FHT_SAMPLES_N / 2) - _R_V) " \n" // set to first sample
 
         // get source sample
         "1: \n"
         "lpm r26,z+ \n" // fetch source address
         "clr r27 \n" // these next 3 lines could be optimized out
         "lsl r26 \n" // by chaging the lookup table
-        "rol r27 \n" // only works for FHT_N <= 128
+        "rol r27 \n" // only works for FHT_SAMPLES_N <= 128
         "subi r26, lo8(-(fht_input)) \n" // pointer to offset
         "sbci r27, hi8(-(fht_input)) \n"
         "ld r2,x+ \n" // fetch source

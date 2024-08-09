@@ -4,15 +4,15 @@
 #include <FHT.h>
 
 extern const int16_t __attribute__((used)) _window_func[] PROGMEM = {
-#if (FHT_N ==  256)
+#if (FHT_SAMPLES_N ==  256)
     #include <hann_256.inc>
-#elif (FHT_N ==  128)
+#elif (FHT_SAMPLES_N ==  128)
     #include <hann_128.inc>
-#elif (FHT_N ==  64)
+#elif (FHT_SAMPLES_N ==  64)
     #include <hann_64.inc>
-#elif (FHT_N ==  32)
+#elif (FHT_SAMPLES_N ==  32)
     #include <hann_32.inc>
-#elif (FHT_N ==  16)
+#elif (FHT_SAMPLES_N ==  16)
     #include <hann_16.inc>
 #endif
 };
@@ -39,7 +39,7 @@ static inline void fht_window() {
         "ldi r30, lo8(_window_func) \n" // set to beginning of lookup table
         "ldi r31, hi8(_window_func) \n"
         "clr r15 \n" // prep null register
-        "ldi r20, " STRINGIFY(((FHT_N)&(0xff))) " \n"
+        "ldi r20, " STRINGIFY(((FHT_SAMPLES_N) & (0xff))) " \n"
 
         "1: \n"
         "lpm r22,z+ \n" // fetch window value

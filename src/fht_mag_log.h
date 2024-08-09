@@ -3,7 +3,7 @@
 
 #include <FHT.h>
 
-uint8_t __attribute__((used)) fht_log_out[(FHT_N/2)]; // FHT log output magintude buffer
+uint8_t __attribute__((used)) fht_log_out[FHT_AMPLITUDES_N]; // FHT log output magintude buffer
 
 extern const uint8_t __attribute__((used)) _log_table[] PROGMEM = {
     #include <decibel.inc>
@@ -34,11 +34,11 @@ static inline void fht_mag_log() {
         "ldi r27, hi8(fht_input) \n"
         "ldi r28, lo8(fht_log_out) \n" // set to beginning of result space
         "ldi r29, hi8(fht_log_out) \n"
-        "ldi r30, lo8(fht_input + " STRINGIFY(FHT_N*2) ") \n" // set to end of data space
-        "ldi r31, hi8(fht_input + " STRINGIFY(FHT_N*2) ") \n"
+        "ldi r30, lo8(fht_input + " STRINGIFY(FHT_SAMPLES_N * 2) ") \n" // set to end of data space
+        "ldi r31, hi8(fht_input + " STRINGIFY(FHT_SAMPLES_N * 2) ") \n"
         "movw r8,r30 \n" // z register clobbered below
         "clr r15 \n" // clear null register
-        "ldi r20, " STRINGIFY(FHT_N/2) " \n" // set loop counter
+        "ldi r20, " STRINGIFY(FHT_SAMPLES_N / 2) " \n" // set loop counter
         "ld r16,x+ \n" // do zero frequency bin first
         "ld r17,x+ \n"
         "movw r18,r16 \n" // double zero frequency bin
