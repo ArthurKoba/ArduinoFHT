@@ -1,5 +1,5 @@
 {
-  "name": "AVR_FHT",
+  "name": "AvrFHT",
   "description": "Fast Hartley Transform (FHT) for AVR chips. This package is a modification of the outdated ArduinoFHT library, which has been modified for ease of use and some memory optimizations.",
   "keywords": "FHT, Fast Hartley Transform, FFT",
   "authors": [
