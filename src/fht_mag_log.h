@@ -1,13 +1,10 @@
 #ifndef AVR_FHT_FHT_MAG_LOG_H
 #define AVR_FHT_FHT_MAG_LOG_H
 
-#include <FHT.h>
+#include <AvrFHT.h>
+#include "log_table.h"
 
 uint8_t __attribute__((used)) fht_log_out[FHT_AMPLITUDES_N]; // FHT log output magintude buffer
-
-extern const uint8_t __attribute__((used)) _log_table[] PROGMEM = {
-    #include <decibel.inc>
-};
 
 static inline void fht_mag_log() {
     // save registers that are getting clobbered

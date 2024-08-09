@@ -5,23 +5,14 @@
 #define SAMPLES_READ_DELAY_US 0
 
 #include <Arduino.h>
-#include "BDSP.h"
-#include "FHT.h"
+#include "AvrFHT.h"
 #include "fht_window.h"
 #include "fht_reorder.h"
-#include "fht_mag_lin8_no_asm.h."
-
-BDSPTransmitter transmitter;
+#include "fht_mag_lin8_no_asm.h"
 
 void setup() {
-    Serial.begin(SERIAL_SPEED);
+    Serial.begin(115200);
     Serial.println();
-
-    COBS::config_t config = {.delimiter = '\n', .depth = 255};
-    transmitter.set_config(config, [] (uint8_t *data_p, size_t size, void *context) {
-        Serial.write(data_p, size);
-        Serial.flush();
-    });
 
     pinMode(AR_MIC_PIN, OUTPUT);
     digitalWrite(AR_MIC_PIN, false);
@@ -33,14 +24,14 @@ void setup() {
 }
 
 void loop() {
-    for (int & i : fht_input) {
-        i = analogRead(MAX9814_PIN) - SAMPLES_OFFSET;
+    for (int & sample : fht_input) {
+        sample = analogRead(MAX9814_PIN) - SAMPLES_OFFSET;
         delayMicroseconds(SAMPLES_READ_DELAY_US);
     }
     fht_window();
     fht_reorder();
     fht_transform();
-    fht_mag_lin_no_asm();
+    fht_mag_lin8_no_asm();
 
     Serial.print(fht_lin_out8[0]);
     for (int i = 1; i < FHT_AMPLITUDES_N; ++i) {

@@ -1,38 +1,42 @@
 #######################################
-# Syntax Coloring Map For ArduinoFHT
+# Syntax Coloring Map For AVR_FHT
 #######################################
 
 #######################################
-# Datatypes (KEYWORD1)
+# Datatypes	(KEYWORD1)
 #######################################
 
-FHT	KEYWORD1
+fht_input                       KEYWORD1
+fht_lin_out                     KEYWORD1
+fht_lin_out8                    KEYWORD1
+fht_log_out                     KEYWORD1
+fht_oct_out                     KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
 
-fht_run	KEYWORD2
-fht_reorder	KEYWORD2
-fht_window	KEYWORD2
-fht_mag_log	KEYWORD2
-fht_mag_lin	KEYWORD2
-fht_mag_lin8	KEYWORD2
-fht_mag_octave	KEYWORD2
+
+fht_mag_lin                     KEYWORD2
+fht_mag_lin8                    KEYWORD2
+fht_mag_lin8_no_asm				KEYWORD2
+fht_log_out                     KEYWORD2
+fht_oct_out                     KEYWORD2
+fht_transform				    KEYWORD2
+fht_reorder	                    KEYWORD2
+fht_window			            KEYWORD2
+fast_rss                        KEYWORD2
+
+#######################################
+# Structures (KEYWORD3)
+#######################################
+
 
 
 #######################################
 # Constants (LITERAL1)
 #######################################
 
-FHT_N	LITERAL1
-SCALE	LITERAL1
-WINDOW	LITERAL1
-LIN_OUT	LITERAL1
-LIN_OUT8	LITERAL1
-OCTAVE	LITERAL1
-LOG_OUT	LITERAL1
-REORDER	LITERAL1
-OCT_NORM	LITERAL1
-
-
+FHT_SAMPLES_N		            LITERAL1
+SCALE_LIN8						LITERAL1
+OCT_NORM                        LITERAL1

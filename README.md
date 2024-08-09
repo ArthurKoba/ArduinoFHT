@@ -1,3 +1,16 @@
+**AVR Fast Hartley Transform** for AVR chips.
+=============================================
+
+[![arduino-library-badge](https://www.ardu-badge.com/badge/AvrFHT.svg?)](https://www.ardu-badge.com/AvrFHT)
+[![PlatformIO Registry](https://badges.registry.platformio.org/packages/kobaproduction/library/AvrFHT.svg)](https://registry.platformio.org/libraries/kobaproduction/AvrFHT)
+[![Russian Translate](https://img.shields.io/badge/README-RUSSIAN_TRANLATE-blueviolet.svg?style=flat-square)](https://github-com.translate.goog/KobaProduction/AvrFHT?_x_tr_sl=en&_x_tr_tl=ru)
+
+
+Fast Hartley Transform (FHT) for AVR chips. 
+This package is a modification of the outdated ArduinoFHT library, 
+which has been modified for ease of use and some memory optimizations.
+
+
 ## Original source is http://wiki.openmusiclabs.com/wiki/ArduinoFHT
 
 fht_read_me.txt
@@ -56,7 +69,7 @@ Func: run  : reorder : window : lin : lin8 : log : oct :
 --------------------------------------------------------
 
 * Note: the lin8 values are approximate, as they vary a small amount due
-to SCALE factor.  see #define section for more detials.
+to SCALE_LIN8 factor.  see #define section for more detials.
 
 B. MEMORY CHARACTERISTICS
 
@@ -228,11 +241,11 @@ so its best to use them to turn off the extra resource hogs.
 A. FHT_N - sets the fht size.  possible options are 16, 32, 64, 128, 256.
 256 is the defualt.
 
-B. SCALE - sets the scaling factor for fht_mag_lin8().  since 8b resolution
+B. SCALE_LIN8 - sets the scaling factor for fht_mag_lin8().  since 8b resolution
 is pretty poor, you will want to scale the values to max out the full range.
-setting SCALE multiplies the output by a constant beefore doing the square
+setting SCALE_LIN8 multiplies the output by a constant beefore doing the square
 root, so you have maximum resolution.  it does consume slightly more
-resources, but is pretty minimal.  SCALE can be any number from 1 -> 255. by
+resources, but is pretty minimal.  SCALE_LIN8 can be any number from 1 -> 255. by
 default it is 1.  1, 2, 4, 128, and 256 consume the least resources.
 
 C. WINDOW - turns on or off the window function resources.  if you are not using

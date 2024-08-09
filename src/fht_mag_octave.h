@@ -1,17 +1,14 @@
 #ifndef AVR_FHT_FHT_MAG_OCTAVE_H
 #define AVR_FHT_FHT_MAG_OCTAVE_H
 
-#include <FHT.h>
+#include <AvrFHT.h>
+#include "log_table.h"
 
 #ifndef OCT_NORM // wether using the octave normilization
 #define OCT_NORM 1
 #endif
 
 uint8_t __attribute__((used)) fht_oct_out[(LOG_N)]; // FHT octave output magintude buffer
-
-extern const uint8_t __attribute__((used)) _log_table[] PROGMEM = {
-    #include <decibel.inc>
-};
 
 static inline void fht_mag_octave() {
     // save registers that are getting clobbered
