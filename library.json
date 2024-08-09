@@ -1,0 +1,27 @@
+{
+  "name": "AVR_FHT",
+  "description": "Fast Hartley Transform (FHT) for AVR chips. This package is a modification of the outdated ArduinoFHT library, which has been modified for ease of use and some memory optimizations.",
+  "keywords": "FHT, Fast Hartley Transform, FFT",
+  "authors": [
+    {
+      "name": "Arthur Koba",
+      "url": "https://github.com/ArthurKoba",
+      "maintainer": true
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KobaProduction/AVR_FHT.git"
+  },
+  "version": "5.0.0",
+  "license": "MIT",
+  "homepage": "https://github.com/KobaProduction/AVR_FHT",
+  "frameworks": "*",
+  "platforms": "avr",
+  "headers": "FHT.h",
+  "build": {
+    "srcFilter": [
+      "+<*.cpp>"
+    ]
+  }
+}
