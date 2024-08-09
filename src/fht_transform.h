@@ -1,7 +1,7 @@
-#ifndef AVR_FHT_TRANSFORM_H
-#define AVR_FHT_TRANSFORM_H
+#ifndef AVR_FHT_FHT_TRANSFORM_H
+#define AVR_FHT_FHT_TRANSFORM_H
 
-static inline void fht_run(void) {
+static inline void fht_transform() {
     // save registers that are getting clobbered
     // avr-gcc requires r2:r17,r28:r29, and r1 cleared
     asm volatile (
@@ -476,4 +476,4 @@ static inline void fht_run(void) {
     );
 }
 
-#endif //AVR_FHT_TRANSFORM_H
+#endif //AVR_FHT_FHT_TRANSFORM_H

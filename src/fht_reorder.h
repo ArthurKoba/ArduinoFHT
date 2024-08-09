@@ -1,30 +1,23 @@
-#ifndef AVR_FHT_REORDER_H
-#define AVR_FHT_REORDER_H
+#ifndef AVR_FHT_FHT_REORDER_H
+#define AVR_FHT_FHT_REORDER_H
 
-#ifndef REORDER // wether using the reorder function or not
-#define REORDER 1
-#endif
+#include <FHT.h>
 
-#if (REORDER == 1)
-namespace FHT {
-
-    extern const uint8_t __attribute__((used)) _reorder_table[] PROGMEM = {
+extern const uint8_t __attribute__((used)) _reorder_table[] PROGMEM = {
 #if (FHT_N == 256)
-        #include <256_reorder.inc>
+    #include <256_reorder.inc>
 #elif (FHT_N == 128)
-        #include <128_reorder.inc>
+    #include <128_reorder.inc>
 #elif (FHT_N == 64)
-        #include <64_reorder.inc>
+    #include <64_reorder.inc>
 #elif (FHT_N == 32)
-        #include <32_reorder.inc>
+    #include <32_reorder.inc>
 #elif (FHT_N == 16)
-        #include <16_reorder.inc>
+    #include <16_reorder.inc>
 #endif
-    };
-}
-#endif
+};
 
-static inline void fht_reorder(void) {
+static inline void fht_reorder() {
     // save registers that are getting clobbered
     // avr-gcc requires r2:r17,r28:r29, and r1 cleared
     asm volatile (
@@ -87,4 +80,4 @@ static inline void fht_reorder(void) {
     );
 }
 
-#endif //AVR_FHT_REORDER_H
+#endif //AVR_FHT_FHT_REORDER_H

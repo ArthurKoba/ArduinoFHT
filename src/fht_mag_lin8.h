@@ -1,22 +1,19 @@
-#ifndef AVR_FHT_MAG_LIN_H
-#define AVR_FHT_MAG_LIN_H
+#ifndef AVR_FHT_FHT_MAG_LIN8_H
+#define AVR_FHT_FHT_MAG_LIN8_H
 
-#ifndef LIN_OUT // wether using the linear output function or not
-#define LIN_OUT 0
+#include <FHT.h>
+
+#ifndef SCALE // scaling factor for lin8 output function
+#define SCALE 1
 #endif
 
-#if (LIN_OUT == 1)
-namespace FHT {
+uint8_t __attribute__((used)) fht_lin_out8[(FHT_N/2)]; // FHT linear output magintude buffer
 
-    uint16_t __attribute__((used)) fht_lin_out[(FHT_N/2)]; // FHT linear output magintude buffer
+extern const uint8_t __attribute__((used)) _lin_table8[] PROGMEM = {
+    #include <sqrtlookup8.inc>
+};
 
-    extern const uint8_t __attribute__((used)) _lin_table[] PROGMEM = {
-        #include <sqrtlookup16.inc>
-    };
-}
-#endif
-
-static inline void fht_mag_lin(void) {
+static inline void fht_mag_lin8() {
     // save registers that are getting clobbered
     // avr-gcc requires r2:r17,r28:r29, and r1 cleared
     asm volatile (
@@ -34,12 +31,12 @@ static inline void fht_mag_lin(void) {
         "push r29 \n"
     );
 
-    // this returns an 16b unsigned value which is 16*((img^2 + real^2)^0.5)
+    // this returns an 8b unsigned value which is (225/(181*256*256))*((img^2 + real^2)^0.5)
     asm volatile (
         "ldi r26, lo8(fht_input) \n" // set to beginning of data space
         "ldi r27, hi8(fht_input) \n"
-        "ldi r28, lo8(fht_input) \n" // set to beginning of result space
-        "ldi r29, hi8(fht_input) \n"
+        "ldi r28, lo8(fht_lin_out8) \n" // set to beginning of result space
+        "ldi r29, hi8(fht_lin_out8) \n"
         "ldi r30, lo8(fht_input + " STRINGIFY(FHT_N*2) ") \n" // set to end of data space
         "ldi r31, hi8(fht_input + " STRINGIFY(FHT_N*2) ") \n"
         "movw r8,r30 \n" // z register clobbered below
@@ -84,92 +81,71 @@ static inline void fht_mag_lin(void) {
         "adc r4,r1 \n"
         "adc r5,r15 \n"
 
-        // square root via lookup table
-        // first scales the magnitude to a 16b value times an 8b exponent
-        "clr r17 \n" // clear exponent register
-        "tst r5 \n"
-        "breq 3f \n"
-        "ldi r17,0x08 \n"
+#if (SCALE == 1)
         "movw r30,r4 \n"
+#elif (SCALE == 2)
+        "lsl r3 \n"
+        "rol r4 \n"
+        "rol r5 \n"
+        "movw r30,r4 \n"
+#elif (SCALE == 4)
+        "lsl r3 \n"
+        "rol r4 \n"
+        "rol r5 \n"
+        "lsl r3 \n"
+        "rol r4 \n"
+        "rol r5 \n"
+        "movw r30,r4 \n"
+#elif (SCALE == 128)
+        "lsr r5 \n"
+        "ror r4 \n"
+        "ror r3 \n"
+        "mov r31,r4 \n"
+        "mov r30,r3 \n"
+#elif (SCALE == 256)
+        "mov r30,r3 \n"
+        "mov r31,r4 \n"
+#else
+        "ldi r18, " STRINGIFY(SCALE) " \n"
+        "mul r5,r18 \n"
+        "mov r31,r0 \n"
+        "mul r3,r18 \n"
+        "mov r30,r1 \n"
+        "mul r4,r18 \n"
+        "add r30,r0 \n"
+        "adc r31,r1 \n"
+#endif
+
+        // square root via lookup table
+        // scales the magnitude to an 8b value
+        "cpi r31,0x10 \n"
+        "brsh 2f \n"
+        "cpi r31,0x01 \n"
+        "brsh 3f \n"
+        "rjmp 6f \n"
 
         "2: \n"
-        "cpi r31,0x40 \n"
-        "brsh 6f \n" // all values already known to be > 0x40
-        "lsl r3 \n"
-        "rol r30 \n"
+        "lsl r30 \n"
         "rol r31 \n"
-        "lsl r3 \n"
-        "rol r30 \n"
-        "rol r31 \n"
-        "dec r17 \n"
+        "mov r30,r31 \n"
+        "ldi r31,0x01 \n"
+        "subi r30,0x80 \n"
+        "sbci r31,0xff \n"
         "rjmp 6f \n"
 
         "3: \n"
-        "tst r4 \n"
-        "breq 5f \n"
-        "ldi r17,0x04 \n"
-        "mov r31,r4 \n"
-        "mov r30,r3 \n"
-
-        "4: \n"
-        "cpi r31,0x40 \n"
-        "brsh 6f \n" // all values already known to be > 0x40
-        "lsl r2 \n"
-        "rol r30 \n"
-        "rol r31 \n"
-        "lsl r2 \n"
-        "rol r30 \n"
-        "rol r31 \n"
-        "dec r17 \n"
-        "rjmp 4b \n"
-
-        // find sqrt via lookup table
-        "5: \n"
-        "movw r30,r2 \n"
-        "cpi r31,0x40 \n"
-        "brsh 6f \n"
-        "cpi r31,0x10 \n"
-        "brsh 12f \n"
-        "cpi r31,0x01 \n"
-        "brlo 10f \n"
-        "swap r31 \n"
         "swap r30 \n"
+        "swap r31 \n"
         "andi r30,0x0f \n"
         "or r30,r31 \n"
         "lsr r30 \n"
         "ldi r31,0x01 \n"
-        "rjmp 10f \n"
 
         "6: \n"
-        "mov r30,r31 \n"
-        "ldi r31,0x02 \n"
-        "rjmp 10f \n"
-
-        "12: \n"
-        "lsl r30 \n"
-        "rol r31 \n"
-        "mov r30,r31 \n"
-        "ori r30,0x80 \n"
-        "ldi r31,0x01 \n"
-
-        "10: \n"
-        "subi r30, lo8(-(_lin_table)) \n" // add offset to lookup table pointer
-        "sbci r31, hi8(-(_lin_table)) \n"
-        "lpm r16,z \n" // fetch square root
-        "clr r18 \n"
-
-        "7: \n" // multiply by exponent
-        "tst r17 \n"
-        "breq 8f \n" // skip if no exponent
-        "13: \n"
-        "lsl r16 \n"
-        "rol r18 \n"
-        "dec r17 \n"
-        "brne 13b \n"
-
-        "8: \n"
+        "subi r30, lo8(-(_lin_table8)) \n" // add offset to lookup table pointer
+        "sbci r31, hi8(-(_lin_table8)) \n"
+        "lpm r16,z \n" // fetch log compressed square root
         "st y+,r16 \n" // store value
-        "st y+,r18 \n"
         "dec r20 \n" // check if all data processed
         "breq 9f \n"
         "rjmp 1b \n"
@@ -196,4 +172,4 @@ static inline void fht_mag_lin(void) {
     );
 }
 
-#endif //AVR_FHT_MAG_LIN_H
+#endif //AVR_FHT_FHT_MAG_LIN8_H

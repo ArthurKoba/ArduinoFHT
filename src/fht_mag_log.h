@@ -1,26 +1,15 @@
-#ifndef AVR_FHT_MAG_LIN8_H
-#define AVR_FHT_MAG_LIN8_H
+#ifndef AVR_FHT_FHT_MAG_LOG_H
+#define AVR_FHT_FHT_MAG_LOG_H
 
-#ifndef SCALE // scaling factor for lin8 output function
-#define SCALE 1
-#endif
+#include <FHT.h>
 
-#ifndef LIN_OUT8 // wether using the linear output function or not
-#define LIN_OUT8 0
-#endif
+uint8_t __attribute__((used)) fht_log_out[(FHT_N/2)]; // FHT log output magintude buffer
 
-#if (LIN_OUT8 == 1)
-namespace FHT {
+extern const uint8_t __attribute__((used)) _log_table[] PROGMEM = {
+    #include <decibel.inc>
+};
 
-    uint8_t __attribute__((used)) fht_lin_out8[(FHT_N/2)]; // FHT linear output magintude buffer
-
-    extern const uint8_t __attribute__((used)) _lin_table8[] PROGMEM = {
-        #include <sqrtlookup8.inc>
-    };
-}
-#endif
-
-static inline void fht_mag_lin8(void) {
+static inline void fht_mag_log() {
     // save registers that are getting clobbered
     // avr-gcc requires r2:r17,r28:r29, and r1 cleared
     asm volatile (
@@ -31,6 +20,7 @@ static inline void fht_mag_lin8(void) {
         "push r6 \n"
         "push r7 \n"
         "push r8 \n"
+        "push r9 \n"
         "push r15 \n"
         "push r16 \n"
         "push r17 \n"
@@ -38,12 +28,12 @@ static inline void fht_mag_lin8(void) {
         "push r29 \n"
     );
 
-    // this returns an 8b unsigned value which is (225/(181*256*256))*((img^2 + real^2)^0.5)
+    // this returns an 8b unsigned value which is 16*log2((img^2 + real^2)^0.5)
     asm volatile (
         "ldi r26, lo8(fht_input) \n" // set to beginning of data space
         "ldi r27, hi8(fht_input) \n"
-        "ldi r28, lo8(fht_lin_out8) \n" // set to beginning of result space
-        "ldi r29, hi8(fht_lin_out8) \n"
+        "ldi r28, lo8(fht_log_out) \n" // set to beginning of result space
+        "ldi r29, hi8(fht_log_out) \n"
         "ldi r30, lo8(fht_input + " STRINGIFY(FHT_N*2) ") \n" // set to end of data space
         "ldi r31, hi8(fht_input + " STRINGIFY(FHT_N*2) ") \n"
         "movw r8,r30 \n" // z register clobbered below
@@ -52,7 +42,7 @@ static inline void fht_mag_lin8(void) {
         "ld r16,x+ \n" // do zero frequency bin first
         "ld r17,x+ \n"
         "movw r18,r16 \n" // double zero frequency bin
-        "rjmp 20f \n" // skip ahead
+        "rjmp 10f \n" // skip ahead
 
         "1: \n"
         "movw r30,r8 \n" // restore z register
@@ -63,7 +53,7 @@ static inline void fht_mag_lin8(void) {
         "movw r8,r30 \n" // store z register
 
         // process real^2
-        "20: \n"
+        "10: \n"
         "muls r17,r17 \n"
         "movw r4,r0 \n"
         "mul r16,r16 \n"
@@ -88,77 +78,73 @@ static inline void fht_mag_lin8(void) {
         "adc r4,r1 \n"
         "adc r5,r15 \n"
 
-#if (SCALE == 1)
-        "movw r30,r4 \n"
-#elif (SCALE == 2)
-        "lsl r3 \n"
-        "rol r4 \n"
-        "rol r5 \n"
-        "movw r30,r4 \n"
-#elif (SCALE == 4)
-        "lsl r3 \n"
-        "rol r4 \n"
-        "rol r5 \n"
-        "lsl r3 \n"
-        "rol r4 \n"
-        "rol r5 \n"
-        "movw r30,r4 \n"
-#elif (SCALE == 128)
-        "lsr r5 \n"
-        "ror r4 \n"
-        "ror r3 \n"
-        "mov r31,r4 \n"
-        "mov r30,r3 \n"
-#elif (SCALE == 256)
-        "mov r30,r3 \n"
-        "mov r31,r4 \n"
-#else
-        "ldi r18, " STRINGIFY(SCALE) " \n"
-        "mul r5,r18 \n"
-        "mov r31,r0 \n"
-        "mul r3,r18 \n"
-        "mov r30,r1 \n"
-        "mul r4,r18 \n"
-        "add r30,r0 \n"
-        "adc r31,r1 \n"
-#endif
-
-        // square root via lookup table
-        // scales the magnitude to an 8b value
-        "cpi r31,0x10 \n"
-        "brsh 2f \n"
-        "cpi r31,0x01 \n"
-        "brsh 3f \n"
-        "rjmp 6f \n"
+        // decibel of the square root via lookup table
+        // scales the magnitude to an 8b value times an 8b exponent
+        "clr r17 \n" // clear exponent register
+        "tst r5 \n"
+        "breq 3f \n"
+        "ldi r17,0x0c \n"
+        "mov r30,r5 \n"
 
         "2: \n"
-        "lsl r30 \n"
-        "rol r31 \n"
-        "mov r30,r31 \n"
-        "ldi r31,0x01 \n"
-        "subi r30,0x80 \n"
-        "sbci r31,0xff \n"
-        "rjmp 6f \n"
+        "cpi r30,0x40 \n"
+        "brsh 8f \n"
+        "lsl r4 \n"
+        "rol r30 \n"
+        "lsl r4 \n"
+        "rol r30 \n"
+        "dec r17 \n"
+        "rjmp 2b \n"
 
         "3: \n"
-        "swap r30 \n"
-        "swap r31 \n"
-        "andi r30,0x0f \n"
-        "or r30,r31 \n"
-        "lsr r30 \n"
-        "ldi r31,0x01 \n"
+        "tst r4 \n"
+        "breq 5f \n"
+        "ldi r17,0x08 \n"
+        "mov r30,r4 \n"
+
+        "4: \n"
+        "cpi r30,0x40 \n"
+        "brsh 8f \n"
+        "lsl r3 \n"
+        "rol r30 \n"
+        "lsl r3 \n"
+        "rol r30 \n"
+        "dec r17 \n"
+        "rjmp 4b \n"
+
+        "5: \n"
+        "tst r3 \n"
+        "breq 7f \n"
+        "ldi r17,0x04 \n"
+        "mov r30,r3 \n"
 
         "6: \n"
-        "subi r30, lo8(-(_lin_table8)) \n" // add offset to lookup table pointer
-        "sbci r31, hi8(-(_lin_table8)) \n"
+        "cpi r30,0x40 \n"
+        "brsh 8f \n"
+        "lsl r2 \n"
+        "rol r30 \n"
+        "lsl r2 \n"
+        "rol r30 \n"
+        "dec r17 \n"
+        "rjmp 6b \n"
+
+        "7: \n"
+        "mov r30,r2 \n"
+
+        "8: \n"
+        "clr r31 \n"
+        "subi r30, lo8(-(_log_table)) \n" // add offset to lookup table pointer
+        "sbci r31, hi8(-(_log_table)) \n"
         "lpm r16,z \n" // fetch log compressed square root
+        "swap r17 \n"  // multiply exponent by 16
+        "add r16,r17 \n" // add for final value
         "st y+,r16 \n" // store value
         "dec r20 \n" // check if all data processed
         "breq 9f \n"
         "rjmp 1b \n"
         "9: \n" // all done
         : :
-        : "r0", "r26", "r27", "r30", "r31", "r18", "r19", "r20"// clobber list
+        : "r0", "r26", "r27", "r30", "r31", "r18", "r19", "r20" // clobber list
     );
 
     // get the clobbers off the stack
@@ -168,6 +154,7 @@ static inline void fht_mag_lin8(void) {
         "pop r17 \n"
         "pop r16 \n"
         "pop r15 \n"
+        "pop r9 \n"
         "pop r8 \n"
         "pop r7 \n"
         "pop r6 \n"
@@ -179,4 +166,4 @@ static inline void fht_mag_lin8(void) {
     );
 }
 
-#endif //AVR_FHT_MAG_LIN8_H
+#endif //AVR_FHT_FHT_MAG_LOG_H

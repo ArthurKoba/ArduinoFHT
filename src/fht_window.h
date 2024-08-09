@@ -1,14 +1,9 @@
-#ifndef AVR_FHT_WINDOW_H
-#define AVR_FHT_WINDOW_H
+#ifndef AVR_FHT_FHT_WINDOW_H
+#define AVR_FHT_FHT_WINDOW_H
 
-#ifndef WINDOW // wether using the window function or not
-#define WINDOW 1
-#endif
+#include <FHT.h>
 
-#if (WINDOW == 1) // window functions are in 16b signed format
-namespace FHT {
-
-    extern const int16_t __attribute__((used)) _window_func[] PROGMEM = {
+extern const int16_t __attribute__((used)) _window_func[] PROGMEM = {
 #if (FHT_N ==  256)
     #include <hann_256.inc>
 #elif (FHT_N ==  128)
@@ -20,11 +15,9 @@ namespace FHT {
 #elif (FHT_N ==  16)
     #include <hann_16.inc>
 #endif
-    };
-}
-#endif
+};
 
-static inline void fht_window(void) {
+static inline void fht_window() {
     // save registers that are getting clobbered
     // avr-gcc requires r2:r17,r28:r29, and r1 cleared
     asm volatile (
@@ -94,4 +87,4 @@ static inline void fht_window(void) {
     );
 }
 
-#endif //AVR_FHT_WINDOW_H
+#endif //AVR_FHT_FHT_WINDOW_H

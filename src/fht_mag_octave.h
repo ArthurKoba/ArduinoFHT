@@ -1,20 +1,22 @@
-#ifndef AVR_FHT_MAG_LOG_H
-#define AVR_FHT_MAG_LOG_H
+#ifndef AVR_FHT_FHT_MAG_OCTAVE_H
+#define AVR_FHT_FHT_MAG_OCTAVE_H
 
-#ifndef LOG_OUT // wether using the log output function or not
-#define LOG_OUT 0
+#include <FHT.h>
+
+#ifndef OCT_NORM // wether using the octave normilization
+#define OCT_NORM 1
 #endif
 
-#if (LOG_OUT == 1)
-namespace FHT {
+uint8_t __attribute__((used)) fht_oct_out[(LOG_N)]; // FHT octave output magintude buffer
 
-    uint8_t __attribute__((used)) fht_log_out[(FHT_N/2)]; // FHT log output magintude buffer
-}
-#endif
+extern const uint8_t __attribute__((used)) _log_table[] PROGMEM = {
+    #include <decibel.inc>
+};
 
-static inline void fht_mag_log(void) {
+static inline void fht_mag_octave() {
     // save registers that are getting clobbered
-    // avr-gcc requires r2:r17,r28:r29, and r1 cleared
+    // avr-gcc only requires r2:r17,r28:r29, and r1 cleared
+    // but im doing them all to be safe
     asm volatile (
         "push r2 \n"
         "push r3 \n"
@@ -24,6 +26,7 @@ static inline void fht_mag_log(void) {
         "push r7 \n"
         "push r8 \n"
         "push r9 \n"
+        "push r10 \n"
         "push r15 \n"
         "push r16 \n"
         "push r17 \n"
@@ -31,58 +34,103 @@ static inline void fht_mag_log(void) {
         "push r29 \n"
     );
 
-    // this returns an 8b unsigned value which is 16*log2((img^2 + real^2)^0.5)
+    // this returns the energy in the sum of bins within an octave (doubling of frequencies)
     asm volatile (
         "ldi r26, lo8(fht_input) \n" // set to beginning of data space
         "ldi r27, hi8(fht_input) \n"
-        "ldi r28, lo8(fht_log_out) \n" // set to beginning of result space
-        "ldi r29, hi8(fht_log_out) \n"
+        "ldi r28, lo8(fht_oct_out) \n" // set to beginning of result space
+        "ldi r29, hi8(fht_oct_out) \n"
         "ldi r30, lo8(fht_input + " STRINGIFY(FHT_N*2) ") \n" // set to end of data space
         "ldi r31, hi8(fht_input + " STRINGIFY(FHT_N*2) ") \n"
-        "movw r8,r30 \n" // z register clobbered below
+        "movw r10,r30 \n" // z register clobbered below
         "clr r15 \n" // clear null register
-        "ldi r20, " STRINGIFY(FHT_N/2) " \n" // set loop counter
+        "ldi r20, 0x01 \n" // set first bin check (needed to make sequence 1-1-2-4-etc)
+        "ldi r21, 0x01 \n" // set loop counter
+        "mov r22,r21 \n" // make backup of counter for usage
+        "clr r2 \n" // clear the accumulator
+        "clr r3 \n"
+        "movw r4,r2 \n"
+        "clr r6 \n"
         "ld r16,x+ \n" // do zero frequency bin first
         "ld r17,x+ \n"
         "movw r18,r16 \n" // double zero frequency bin
-        "rjmp 10f \n" // skip ahead
+        "rjmp 30f \n" // skip ahead
+
+        "13: \n"
+        "clr r20 \n"
+
+        "10: \n"
+        "mov r22,r21 \n" // make backup of counter for usage
+        "clr r2 \n" // clear the accumulator
+        "clr r3 \n"
+        "movw r4,r2 \n"
+        "clr r6 \n"
 
         "1: \n"
-        "movw r30,r8 \n" // restore z register
+        "movw r30,r10 \n" // restore z register
         "ld r16,x+ \n" // fetch real
         "ld r17,x+ \n"
         "ld r19,-Z \n" // fetch imaginary
         "ld r18,-Z \n"
-        "movw r8,r30 \n" // store z register
+        "movw r10,r30 \n" // store z register
 
         // process real^2
-        "10: \n"
+        "30: \n"
         "muls r17,r17 \n"
-        "movw r4,r0 \n"
+        "movw r8,r0 \n" // dont need an sbc as the result is always positive
         "mul r16,r16 \n"
-        "movw r2,r0 \n"
+        "add r2,r0 \n"
+        "adc r3,r1 \n"
+        "adc r4,r8 \n"
+        "adc r5,r9 \n"
+        "adc r6,r15 \n"
         "fmulsu r17,r16 \n" // automatically does x2
         "sbc r5,r15 \n"
+        "sbc r6,r15 \n" // need to carry, might overflow if r5 = 0
         "add r3,r0 \n"
         "adc r4,r1 \n"
         "adc r5,r15 \n"
+        "adc r6,r15 \n"
 
         // process img^2 and accumulate
         "muls r19,r19 \n"
-        "movw r6,r0 \n"
+        "movw r8,r0 \n" // dont need an sbc as the result is always positive
         "mul r18,r18 \n"
         "add r2,r0 \n"
         "adc r3,r1 \n"
-        "adc r4,r6 \n"
-        "adc r5,r7 \n"
+        "adc r4,r8 \n"
+        "adc r5,r9 \n"
+        "adc r6,r15 \n"
         "fmulsu r19,r18 \n" // automatically does x2
         "sbc r5,r15 \n"
+        "sbc r6,r15 \n" // need to carry, might overflow if r5 = 0
         "add r3,r0 \n"
         "adc r4,r1 \n"
         "adc r5,r15 \n"
+        "adc r6,r15 \n"
+
+        // check if summation done
+        "dec r22 \n"
+        "brne 1b \n"
+
+#if (OCT_NORM == 1) // put normilisation code in if needed
+        "mov r22,r21 \n"
+        "lsr r22 \n" // check if done
+        "brcs 12f \n"
+
+        "11: \n"
+        "lsr r6 \n"
+        "ror r5 \n"
+        "ror r4 \n"
+        "ror r3 \n"
+        "ror r2 \n"
+        "lsr r22 \n" // check if done
+        "brcc 11b \n"
+#endif
 
         // decibel of the square root via lookup table
         // scales the magnitude to an 8b value times an 8b exponent
+        "12: \n"
         "clr r17 \n" // clear exponent register
         "tst r5 \n"
         "breq 3f \n"
@@ -142,12 +190,13 @@ static inline void fht_mag_log(void) {
         "swap r17 \n"  // multiply exponent by 16
         "add r16,r17 \n" // add for final value
         "st y+,r16 \n" // store value
-        "dec r20 \n" // check if all data processed
-        "breq 9f \n"
-        "rjmp 1b \n"
-        "9: \n" // all done
+        "sbrc r20, 0x00 \n" // check if first 2 bins done
+        "rjmp 13b \n"
+        "lsl r21 \n"
+        "sbrs r21, " STRINGIFY((LOG_N) - 1) " \n" // check if done
+        "rjmp 10b \n"
         : :
-        : "r0", "r26", "r27", "r30", "r31", "r18", "r19", "r20" // clobber list
+        : "r0", "r26", "r27", "r30", "r31","r18", "r19", "r20","r21", "r22" // clobber list
     );
 
     // get the clobbers off the stack
@@ -157,6 +206,7 @@ static inline void fht_mag_log(void) {
         "pop r17 \n"
         "pop r16 \n"
         "pop r15 \n"
+        "pop r10 \n"
         "pop r9 \n"
         "pop r8 \n"
         "pop r7 \n"
@@ -169,4 +219,4 @@ static inline void fht_mag_log(void) {
     );
 }
 
-#endif //AVR_FHT_MAG_LOG_H
+#endif //AVR_FHT_MAG_OCTAVE_Hs

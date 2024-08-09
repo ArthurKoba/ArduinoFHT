@@ -7,6 +7,10 @@
 #define STRINGIFY_(a) #a
 #define STRINGIFY(a) STRINGIFY_(a)
 
+#if not defined(FHT_N)
+#define FHT_N 256
+#endif
+
 #if FHT_N == 256
 #define LOG_N 8
 #define _R_V 8 // reorder value - used for reorder list
@@ -26,13 +30,9 @@
   #error FHT_N value not defined
 #endif
 
+int __attribute__((used)) fht_input[(FHT_N)]; // FHT input data buffer
 
-
-namespace FHT {
-
-    int __attribute__((used)) fht_input[(FHT_N)]; // FHT input data buffer
-
-    extern const int16_t __attribute__((used)) _cas_constants[] PROGMEM = {
+extern const int16_t __attribute__((used)) _cas_constants[] PROGMEM = {
 #if (FHT_N ==  256)
     #include <cas_lookup_256.inc>
 #elif (FHT_N ==  128)
@@ -44,13 +44,8 @@ namespace FHT {
 #elif (FHT_N ==  16)
     #include <cas_lookup_16.inc>
 #endif
-    };
-
-#if ((LOG_OUT == 1) or (OCTAVE == 1))
-    extern const uint8_t __attribute__((used)) _log_table[] PROGMEM = {
-        #include <decibel.inc>
-    };
-#endif
 };
+
+#include "fht_transform.h"
 
 #endif //AVR_FHT_H
