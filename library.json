@@ -11,11 +11,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/KobaProduction/AVR_FHT.git"
+    "url": "https://github.com/KobaProduction/AvrFHT.git"
   },
-  "version": "1.1.0",
-  "license": "MIT",
-  "homepage": "https://github.com/KobaProduction/AVR_FHT",
+  "version": "1.1.1",
+  "license": "GPL-2.0-only",
+  "homepage": "https://github.com/KobaProduction/AvrFHT",
   "frameworks": "*",
   "platforms": "avr",
   "headers": "AvrFHT.h",
