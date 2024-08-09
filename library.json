@@ -21,7 +21,7 @@
   "headers": "AvrFHT.h",
   "build": {
     "srcFilter": [
-      "+<*.cpp>"
+      "+<*.h>"
     ]
   }
 }
