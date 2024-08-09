@@ -116,7 +116,7 @@ extern const int16_t __attribute__((used)) _cas_constants[] PROGMEM = {
   extern const uint8_t __attribute__((used)) _lin_table[] PROGMEM = {
     #include <sqrtlookup16.inc>
   };
-  uint16_t __attribute__((used)) fht_lin_out[(FHT_N/2)]; // FHT linear output magintude buffer
+//  uint16_t __attribute__((used)) fht_lin_out[(FHT_N/2)]; // FHT linear output magintude buffer
 #endif
 
 #if (LIN_OUT8 == 1)
@@ -869,8 +869,8 @@ static inline void fht_mag_lin(void) {
   asm volatile (
   "ldi r26, lo8(fht_input) \n" // set to beginning of data space
   "ldi r27, hi8(fht_input) \n"
-  "ldi r28, lo8(fht_lin_out) \n" // set to beginning of result space
-  "ldi r29, hi8(fht_lin_out) \n"
+  "ldi r28, lo8(fht_input) \n" // set to beginning of result space
+  "ldi r29, hi8(fht_input) \n"
   "ldi r30, lo8(fht_input + " STRINGIFY(FHT_N*2) ") \n" // set to end of data space
   "ldi r31, hi8(fht_input + " STRINGIFY(FHT_N*2) ") \n"
   "movw r8,r30 \n" // z register clobbered below
